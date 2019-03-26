@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Check Status</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VPN Status</title>
 </head>
 <body>
   <style>
@@ -35,6 +35,7 @@
       content: '\2713';
     }
 
+    p.error:before,
     p.timeout:before {
       color: #ba6b6b;
       content: '\2717';
@@ -48,7 +49,7 @@
 
   <h1>VPN Status</h1>
 
-  <p id="ip-check-1"></p>
+  <div id="vpnstatus"></div>
 
   <iframe id="traceroute" src="" height="300">
   </iframe>
@@ -71,10 +72,12 @@ const traceHost = 'openwrt.org';
 
 document.getElementById('traceroute').src = `/cgi-bin/vpnstatus?trace=${traceHost}`;
 
-function ping(ip, elementId, callback) {
-  var comp = {};
-  comp.el = document.getElementById(elementId);
-  comp.el.innerHTML = `${ip}: `;
+function ping(ip, callback) {
+  const obj = {};
+  obj.el = document.createElement('p');
+  obj.ms = '';
+  obj.el.innerHTML = `${ip}: `;
+  document.getElementById('vpnstatus').appendChild(obj.el);
 
   fetch(`/cgi-bin/vpnstatus?ping=${ip}`)
     .then((response) => {
@@ -83,25 +86,35 @@ function ping(ip, elementId, callback) {
       }
     })
     .then(function(data) {
-      if (data && data.includes('time')) {
-        comp.ms = data.replace(/.*time=/, '')
-        callback('ok', comp, data);
+      // request was successful
+      if (data) {
+        // ping was successful
+        if (data.includes('time')) {
+          obj.ms = data.replace(/.*time=/, '')
+          callback('ok', obj, data);
+        // ping was not successful
+        } else {
+          callback('timeout', obj);
+        }
+      // error on request
       } else {
-        comp.ms = '';
-        callback('timeout', comp, data);
+        callback('error', obj);
       }
     })
     .catch(function(error) {
-      callback('error', comp, error);
+      callback('error', obj);
     });
 }
 
-updateResult = function(status, data, e) {
+updateResult = function(status, data) {
   data.el.innerHTML = `${data.el.innerHTML} ${status} ${data.ms}`;
   data.el.classList.add(status);
 }
 
-new ping(vpnServer, 'ip-check-1', updateResult);
+new ping(vpnServer, updateResult);
+
+// more hosts to ping can be defined as follows:
+// new ping('192.168.2.1', updateResult);
 
 </script>
 
