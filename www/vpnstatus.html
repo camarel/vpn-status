@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Check Status</title>
+</head>
+<body>
+  <h1>VPN Status</h1>
+
+  <p id="ip-check-1"></p>
+  <p id="ip-check-2"></p>
+  <p id="ip-check-3"></p>
+
+  <style>
+    body {
+      background: #193549;
+      color: white;
+      font-family: 'helvetica neue', sans-serif;
+      font-weight: 100;
+      margin: 0 1em;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 250%;
+    }
+
+    p {
+      font-size: 110%;
+    }
+
+    p:before {
+      content: ' ';
+      display: inline-block;
+      width: 1em;
+    }
+
+    p.ok:before {
+      color: #75ba6b;
+      content: '\2713';
+    }
+
+    p.timeout:before {
+      color: #ba6b6b;
+      content: '\2717';
+    }
+  </style>
+
+<script>
+
+function ping(ip, elementId, callback) {
+  var comp = {};
+  comp.el = document.getElementById(elementId);
+  comp.el.innerHTML = `${ip}: `;
+
+  fetch(`/cgi-bin/vpnstatus?ping=${ip}`)
+    .then((response) => {
+      if (response.ok) {
+        return response.text();
+      }
+    })
+    .then(function(data) {
+      if (data && data.includes('time')) {
+        comp.ms = data.replace(/.*time=/, '')
+        callback('ok', comp, data);
+      } else {
+        comp.ms = '';
+        callback('timeout', comp, data);
+      }
+    })
+    .catch(function(error) {
+      callback('error', comp, error);
+    });
+}
+
+updateResult = function(status, data, e) {
+  data.el.innerHTML = `${data.el.innerHTML} ${status} ${data.ms}`;
+  data.el.classList.add(status);
+}
+
+new ping('192.168.200.1', 'ip-check-1', updateResult);
+new ping('192.168.2.234', 'ip-check-2', updateResult);
+new ping('192.168.200.3', 'ip-check-3', updateResult);
+
+</script>
+
+
+</body>
+</html>
