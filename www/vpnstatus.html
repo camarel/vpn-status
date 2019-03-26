@@ -6,12 +6,6 @@
   <title>Check Status</title>
 </head>
 <body>
-  <h1>VPN Status</h1>
-
-  <p id="ip-check-1"></p>
-  <p id="ip-check-2"></p>
-  <p id="ip-check-3"></p>
-
   <style>
     body {
       background: #193549;
@@ -52,7 +46,30 @@
     }
   </style>
 
+  <h1>VPN Status</h1>
+
+  <p id="ip-check-1"></p>
+
+  <iframe id="traceroute" src="" height="300">
+  </iframe>
+
 <script>
+
+/**********************************
+ * Configuration:
+ *
+ * vpnServer: ip address of the VPN server
+ * traceHost: hostname for traceroute
+ *
+ **********************************/
+
+const vpnServer = '192.168.200.1';
+const traceHost = 'openwrt.org';
+
+/**********************************/
+
+
+document.getElementById('traceroute').src = `/cgi-bin/vpnstatus?trace=${traceHost}`;
 
 function ping(ip, elementId, callback) {
   var comp = {};
@@ -84,14 +101,10 @@ updateResult = function(status, data, e) {
   data.el.classList.add(status);
 }
 
-new ping('192.168.200.1', 'ip-check-1', updateResult);
-new ping('192.168.2.234', 'ip-check-2', updateResult);
-new ping('192.168.200.3', 'ip-check-3', updateResult);
+new ping(vpnServer, 'ip-check-1', updateResult);
 
 </script>
 
-  <iframe src="/cgi-bin/vpnstatus?trace=openwrt.org" height="300">
-  </iframe>
 
 </body>
 </html>
