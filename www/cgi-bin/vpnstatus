@@ -1,0 +1,18 @@
+#!/bin/sh
+echo "Content-type: text/html"
+echo ""
+
+command="${QUERY_STRING%%=*}"
+parameter="${QUERY_STRING#*=}"
+
+if [ -z "$parameter" ]; then
+  exit 0
+else
+  if [ "$command" = "ping" ]; then
+    echo "$(ping -c 1 "$parameter" | grep time)"
+  fi;
+
+  if [ "$command" = "trace" ]; then
+    echo "$(traceroute -m 5 -q 1 -w 1 "$parameter")"
+  fi;
+fi
