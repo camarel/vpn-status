@@ -16,7 +16,7 @@ else
     echo "<!DOCTYPE html>"
     echo "<html>"
     echo "<body>"
-    echo "<pre style='color: white;'>$(traceroute -m 5 -q 1 -w 1 "$parameter")</pre>"
+    echo "<pre style='color: white;' id='traceResponse'>$(traceroute -m 5 -q 1 -w 1 "$parameter")</pre>"
     echo "</body></html>"
   fi;
 fi

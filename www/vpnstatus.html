@@ -20,36 +20,38 @@
       font-size: 250%;
     }
 
-    p {
+    .status {
       font-size: 110%;
-    }
-
-    p:before {
-      content: ' ';
-      display: inline-block;
-      width: 1em;
-    }
-
-    p.ok:before {
-      color: #75ba6b;
-      content: '\2713';
-    }
-
-    p.error:before,
-    p.timeout:before {
-      color: #ba6b6b;
-      content: '\2717';
     }
 
     iframe {
       width: 100%;
       border: 0;
     }
+
+    .status:before {
+      content: ' ';
+      display: inline-block;
+      width: 1em;
+    }
+
+    .status.ok:before {
+      color: #75ba6b;
+      content: '\2713';
+    }
+
+    .status.error:before,
+    .status.timeout:before {
+      color: #ba6b6b;
+      content: '\2717';
+    }
   </style>
 
   <h1>VPN Status</h1>
 
   <div id="vpnstatus"></div>
+
+  <p class="status" id="traceStatus">Traceroute</p>
 
   <iframe id="traceroute" src="" height="300">
   </iframe>
@@ -61,20 +63,42 @@
  *
  * vpnServer: ip address of the VPN server
  * traceHost: hostname for traceroute
+ * traceMatch: a pattern to match traceroute, ip or host
  *
  **********************************/
 
 const vpnServer = '192.168.200.1';
 const traceHost = 'openwrt.org';
+const traceMatch = 'gateway.orange.com';
 
 /**********************************/
 
 
-document.getElementById('traceroute').src = `/cgi-bin/vpnstatus?trace=${traceHost}`;
+const iframe = document.getElementById('traceroute');
+iframe.src = `/cgi-bin/vpnstatus?trace=${traceHost}`;
+
+function getFrameDocument(frame) {
+  return frame.contentWindow
+    ? frame.contentWindow.document
+    : frame.contentDocument
+}
+
+iframe.onload = function() {
+  const frameDocument = getFrameDocument(iframe);
+  const response = frameDocument.getElementById('traceResponse');
+  const traceStatus = document.getElementById('traceStatus');
+
+  if (response && response.innerHTML.includes(traceMatch)) {
+    traceStatus.classList.add('ok');
+  } else {
+    traceStatus.classList.add('error');
+  }
+}
 
 function ping(ip, callback) {
   const obj = {};
   obj.el = document.createElement('p');
+  obj.el.classList.add('status');
   obj.ms = '';
   obj.el.innerHTML = `${ip}: `;
   document.getElementById('vpnstatus').appendChild(obj.el);
