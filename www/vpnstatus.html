@@ -61,29 +61,33 @@
 /**********************************
  * Configuration:
  *
- * vpnServer: ip address of the VPN server
+ * pingHosts: list of ip addresses to ping
  * traceHost: hostname for traceroute
  * traceMatch: a pattern to match traceroute, ip or host
  *
  **********************************/
 
-const vpnServer = '192.168.200.1';
-const traceHost = 'openwrt.org';
+const pingHosts = [
+  '192.168.200.1',
+  // more hosts to ping can be defined as follows:
+  // '192.168.2.1',
+];
+
+const traceHost = 'wikipedia.org';
 const traceMatch = 'gateway.orange.com';
 
 /**********************************/
 
+const getFrameDocument = (frame) => {
+  return frame.contentWindow
+    ? frame.contentWindow.document
+    : frame.contentDocument;
+};
 
 const iframe = document.getElementById('traceroute');
 iframe.src = `/cgi-bin/vpnstatus?trace=${traceHost}`;
 
-function getFrameDocument(frame) {
-  return frame.contentWindow
-    ? frame.contentWindow.document
-    : frame.contentDocument
-}
-
-iframe.onload = function() {
+iframe.onload = () => {
   const frameDocument = getFrameDocument(iframe);
   const response = frameDocument.getElementById('traceResponse');
   const traceStatus = document.getElementById('traceStatus');
@@ -93,9 +97,9 @@ iframe.onload = function() {
   } else {
     traceStatus.classList.add('error');
   }
-}
+};
 
-function ping(ip, callback) {
+const ping = (ip, callback) => {
   const obj = {};
   obj.el = document.createElement('p');
   obj.el.classList.add('status');
@@ -108,13 +112,15 @@ function ping(ip, callback) {
       if (response.ok) {
         return response.text();
       }
+
+      return null;
     })
-    .then(function(data) {
+    .then((data) => {
       // request was successful
       if (data) {
         // ping was successful
         if (data.includes('time')) {
-          obj.ms = data.replace(/.*time=/, '')
+          obj.ms = data.replace(/.*time=/, '');
           callback('ok', obj, data);
         // ping was not successful
         } else {
@@ -125,23 +131,22 @@ function ping(ip, callback) {
         callback('error', obj);
       }
     })
-    .catch(function(error) {
+    .catch((error) => {
       callback('error', obj);
     });
-}
+};
 
-updateResult = function(status, data) {
+const updateResult = (status, data) => {
   data.el.innerHTML = `${data.el.innerHTML} ${status} ${data.ms}`;
   data.el.classList.add(status);
-}
+};
 
-new ping(vpnServer, updateResult);
-
-// more hosts to ping can be defined as follows:
-// new ping('192.168.2.1', updateResult);
+// init ping hosts
+pingHosts.forEach((host) => {
+  ping(host, updateResult);
+});
 
 </script>
-
 
 </body>
 </html>
