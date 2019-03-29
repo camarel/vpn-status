@@ -78,71 +78,64 @@ const traceMatch = 'gateway.orange.com';
 
 /**********************************/
 
-const getFrameDocument = (frame) => {
+getFrameDocument = function(frame) {
   return frame.contentWindow
     ? frame.contentWindow.document
     : frame.contentDocument;
 };
 
 const iframe = document.getElementById('traceroute');
-iframe.src = `/cgi-bin/vpnstatus?trace=${traceHost}`;
+iframe.src = '/cgi-bin/vpnstatus?trace=' + traceHost;
 
-iframe.onload = () => {
+iframe.onload = function() {
   const frameDocument = getFrameDocument(iframe);
   const response = frameDocument.getElementById('traceResponse');
   const traceStatus = document.getElementById('traceStatus');
 
-  if (response && response.innerHTML.includes(traceMatch)) {
+  if (response && response.innerHTML.indexOf(traceMatch) > 0) {
     traceStatus.classList.add('ok');
   } else {
     traceStatus.classList.add('error');
   }
 };
 
-const ping = (ip, callback) => {
+function ping(ip, callback) {
   const obj = {};
   obj.el = document.createElement('p');
   obj.el.classList.add('status');
   obj.ms = '';
-  obj.el.innerHTML = `${ip}: `;
+  obj.el.innerHTML = ip + ': ';
+
   document.getElementById('vpnstatus').appendChild(obj.el);
-
-  fetch(`/cgi-bin/vpnstatus?ping=${ip}`)
-    .then((response) => {
-      if (response.ok) {
-        return response.text();
-      }
-
-      return null;
-    })
-    .then((data) => {
-      // request was successful
-      if (data) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4) {
+      if (this.status == 200) {
+        const data = this.responseText;
         // ping was successful
-        if (data.includes('time')) {
-          obj.ms = data.replace(/.*time=/, '');
+        if (data.indexOf('time') > 0) {
+          obj.ms = data.replace(/.*time=/, '').replace(/\.[0-9]*/, '');
           callback('ok', obj, data);
         // ping was not successful
         } else {
           callback('timeout', obj);
         }
-      // error on request
       } else {
-        callback('error', obj);
+         callback('error', obj);
       }
-    })
-    .catch((error) => {
-      callback('error', obj);
-    });
-};
+    }
+  };
+  xhttp.open("GET", '/cgi-bin/vpnstatus?ping=' + ip, true);
+  xhttp.send();
+}
 
-const updateResult = (status, data) => {
-  data.el.innerHTML = `${data.el.innerHTML} ${status} ${data.ms}`;
+updateResult = function(status, data) {
+  data.el.innerHTML += status + ' ' +  data.ms;
   data.el.classList.add(status);
 };
 
 // init ping hosts
-pingHosts.forEach((host) => {
+pingHosts.forEach(function(host) {
   ping(host, updateResult);
 });
 
