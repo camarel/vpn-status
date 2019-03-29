@@ -5,7 +5,11 @@ echo ""
 command="${QUERY_STRING%%=*}"
 parameter="${QUERY_STRING#*=}"
 
-if [ -z "$parameter" ]; then
+# sanitize the input
+command=${command//[^a-zA-Z0-9]/}
+parameter=${parameter//[^a-zA-Z0-9\.]/}
+
+if [ -z "$parameter" ] || [ "$parameter" = "$command" ]; then
   exit 0
 else
   if [ "$command" = "ping" ]; then
