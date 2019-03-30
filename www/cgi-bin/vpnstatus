@@ -13,7 +13,7 @@ if [ -z "$parameter" ] || [ "$parameter" = "$command" ]; then
   exit 0
 else
   if [ "$command" = "ping" ]; then
-    echo "$(ping -c 1 "$parameter" | grep time)"
+    echo "$(ping -c 1 -w 2 "$parameter" | grep time)"
   fi;
 
   if [ "$command" = "trace" ]; then
