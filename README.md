@@ -23,6 +23,11 @@ Make the CGI script executable:
 chmod +x /www/cgi-bin/vpnstatus
 ```
 
+In the file `/www/vpnstatus.html`: To match your needs, you must edit the following JavaScript variables around line 70:
+
+* pingHosts: a list of hosts you want to ping. One is surely the VPN server you are connecting to.
+* traceMatch: a pattern to match, can be a hostname or an ip address that should be contained in the traceroute.
+
 
 
 ## Usage
