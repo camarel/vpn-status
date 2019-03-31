@@ -10,7 +10,7 @@
     body {
       background: #193549;
       color: white;
-      font-family: 'helvetica neue', sans-serif;
+      font-family: 'Ubuntu', 'helvetica neue', Verdana, sans-serif;
       font-weight: 100;
       margin: 0 1em;
     }
@@ -24,7 +24,7 @@
       font-size: 110%;
     }
 
-    iframe {
+    #traceroute {
       width: 100%;
       border: 0;
     }
@@ -58,23 +58,29 @@
 
 <script>
 
+const config = {};
+
 /**********************************
  * Configuration:
  *
- * pingHosts: list of ip addresses to ping
- * traceHost: hostname for traceroute
- * traceMatch: a pattern to match traceroute, ip or host
+ * config.pingHosts: list of ip addresses to ping
+ * config.traceHost: hostname for traceroute
+ * config.traceMatch: a pattern to match traceroute, ip or host
+ * config.httpRouterWanCheck: a host to make a HTTP request to check if the router wan connection has internet
  *
  **********************************/
 
-const pingHosts = [
+config.pingHosts = [
   '192.168.200.1',
   // more hosts to ping can be defined as follows:
   // '192.168.2.1',
 ];
 
-const traceHost = 'wikipedia.org';
-const traceMatch = 'gateway.orange.com';
+config.traceHost = 'wikipedia.org';
+config.traceMatch = 'gateway.orange.com';
+
+// needs the package wget to be installed on the router
+// config.httpRouterWanCheck = 'twitter.com';
 
 /**********************************/
 
@@ -85,26 +91,31 @@ getFrameDocument = function(frame) {
 };
 
 const iframe = document.getElementById('traceroute');
-iframe.src = '/cgi-bin/vpnstatus?trace=' + traceHost;
+
+iframe.src = '/cgi-bin/vpnstatus?trace=' + config.traceHost;
 
 iframe.onload = function() {
   const frameDocument = getFrameDocument(iframe);
   const response = frameDocument.getElementById('traceResponse');
   const traceStatus = document.getElementById('traceStatus');
 
-  if (response && response.innerHTML.indexOf(traceMatch) > 0) {
+  if (response && response.innerHTML.indexOf(config.traceMatch) > 0) {
     traceStatus.classList.add('ok');
   } else {
     traceStatus.classList.add('error');
   }
 };
 
-function ping(ip, callback) {
+function statusRequest(ip, command, callback, label) {
   const obj = {};
   obj.el = document.createElement('p');
   obj.el.classList.add('status');
   obj.ms = '';
-  obj.el.innerHTML = ip + ': ';
+  if (label) {
+    obj.el.innerHTML = label + ': ';
+  } else {
+    obj.el.innerHTML = ip + ': ';
+  }
 
   document.getElementById('vpnstatus').appendChild(obj.el);
   var xhttp = new XMLHttpRequest();
@@ -112,20 +123,28 @@ function ping(ip, callback) {
     if (this.readyState == 4) {
       if (this.status == 200) {
         const data = this.responseText;
+
+        // check router wan internet access
+        if (command === 'wan' && data.indexOf('online') > 0) {
+          callback('ok', obj, data);
+          return;
+        }
+
         // ping was successful
-        if (data.indexOf('time') > 0) {
+        if (command === 'ping' && data.indexOf('time') > 0) {
           obj.ms = data.replace(/.*time=/, '').replace(/\.[0-9]*/, '');
           callback('ok', obj, data);
-        // ping was not successful
-        } else {
-          callback('timeout', obj);
+          return;
         }
+
+        callback('timeout', obj);
       } else {
-         callback('error', obj);
+        callback('error', obj);
       }
     }
   };
-  xhttp.open("GET", '/cgi-bin/vpnstatus?ping=' + ip, true);
+
+  xhttp.open("GET", '/cgi-bin/vpnstatus?' + command + '=' + ip, true);
   xhttp.send();
 }
 
@@ -134,9 +153,14 @@ updateResult = function(status, data) {
   data.el.classList.add(status);
 };
 
+// check router wan
+if (config.httpRouterWanCheck) {
+  statusRequest(config.httpRouterWanCheck, 'wan', updateResult, 'wan router');
+}
+
 // init ping hosts
-pingHosts.forEach(function(host) {
-  ping(host, updateResult);
+config.pingHosts.forEach(function(host) {
+  statusRequest(host, 'ping', updateResult);
 });
 
 </script>
