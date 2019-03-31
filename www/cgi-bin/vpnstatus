@@ -10,17 +10,25 @@ command=${command//[^a-zA-Z0-9]/}
 parameter=${parameter//[^a-zA-Z0-9\.]/}
 
 if [ -z "$parameter" ] || [ "$parameter" = "$command" ]; then
+  echo "unrecognized command"
   exit 0
 else
   if [ "$command" = "ping" ]; then
-    echo "$(ping -c 1 -w 2 "$parameter" | grep time)"
+    response=$(ping -c 1 -w 3 $parameter | grep time | sed -e 's/\.[[:digit:]]\+\ ms.*/ ms/')
+    echo "$response"
   fi;
 
   if [ "$command" = "trace" ]; then
+    result=$(traceroute -m 5 -q 1 -w 1 "$parameter")
+
+    if [ $? -eq 1 ]; then
+      result="Error with traceroute: Network is probably down"
+    fi
+
     echo "<!DOCTYPE html>"
     echo "<html>"
     echo "<body>"
-    echo "<pre style='color: white;' id='traceResponse'>$(traceroute -m 5 -q 1 -w 1 "$parameter")</pre>"
+    echo "<pre style='color: white;' id='traceResponse'>$result</pre>"
     echo "</body></html>"
   fi;
 fi
