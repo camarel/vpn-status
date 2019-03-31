@@ -31,4 +31,16 @@ else
     echo "<pre style='color: white;' id='traceResponse'>$result</pre>"
     echo "</body></html>"
   fi;
+
+  # check wan internet connection with HTTPS / wget
+  if [ "$command" = "wan" ]; then
+    spider=$(/usr/bin/wget --spider -q --no-check-certificate "https://$parameter" 2>&1)
+
+    if [ $? -eq 0 ]; then
+      echo "status: online"
+    else
+      echo "status: offline"
+    fi
+    # echo "$spider"
+  fi;
 fi
