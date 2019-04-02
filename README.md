@@ -8,8 +8,9 @@ Vpnstatus only checks the connection status with the proper tools provided by th
 
 To check the connection status it does the following:
 
-* Ping the VPN server. Or if you like the router behind the VPN server.
+* Ping the VPN gateway.
 * Traceroute the first 5 hops to a generic website like wikipedia. This indicates, if the traffic goes through the expected hosts. You can define a regex pattern to match the hostname or ip address that you expect to find in the traceroute.
+* Optionally any host can be pinged. Can be used for example to check if the printer is reachable.
 
 
 
@@ -23,10 +24,18 @@ Make the CGI script executable:
 chmod +x /www/cgi-bin/vpnstatus
 ```
 
-In the file `/www/vpnstatus.html`: To match your needs, you must edit the following JavaScript variables around line 70:
+Install wget:
 
-* pingHosts: a list of hosts you want to ping. One is surely the VPN server you are connecting to.
-* traceMatch: a pattern to match, can be a hostname or an ip address that should be contained in the traceroute.
+```
+opkg update
+opkg install wget
+```
+
+Optionally you can modify the file `/www/vpnstatus.html` to match your needs. The configuration can be found around line 70:
+
+* traceHost: the hostname to be used for traceroute.
+* traceMatch: a pattern to match, can be a hostname or an ip address that should be contained in the traceroute result.
+* httpRouterWanCheck: The routers internet can be tested with a wget request. If you want this, add a domain.
 
 
 

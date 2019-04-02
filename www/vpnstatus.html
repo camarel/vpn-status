@@ -117,7 +117,7 @@ iframe.onload = function() {
   }
 };
 
-function statusRequest(ip, command, callback, label) {
+function statusRequest(command, ip, callback, label) {
   const obj = {};
   const xhttp = new XMLHttpRequest();
   obj.el = document.createElement('p');
@@ -145,7 +145,7 @@ function statusRequest(ip, command, callback, label) {
         }
 
         // check connection to vpn gateway
-        if (command === 'vpn') {
+        if (command === 'ping') {
           obj.host = data.result.host;
 
           if (data.result.time) {
@@ -182,11 +182,14 @@ function updateResult(status, data) {
 
 // check router wan
 if (config.httpRouterWanCheck) {
-  statusRequest(config.httpRouterWanCheck, 'wan', updateResult, 'wan router');
+  statusRequest('wan', config.httpRouterWanCheck, updateResult, 'wan router');
 }
 
 // check vpn gateway
-statusRequest('void', 'vpn', updateResult, 'vpn gateway');
+statusRequest('ping', 'gw', updateResult, 'vpn gateway');
+
+// you can also ping any other host
+// statusRequest('ping', '192.168.2.15', updateResult, 'printer');
 
 
 </script>

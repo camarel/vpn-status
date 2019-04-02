@@ -31,21 +31,25 @@ else
   echo "Content-type: application/json"
   echo ""
 
-  # try to ping the vpn gateway
-  if [ "$command" = "vpn" ]; then
-    gateway=$(ip route | grep -e 0.0.0.0/1 | cut -d' ' -f3)
-    response=$(ping -c 1 -w 3 $gateway | grep time)
-    time=$(echo $response | sed -e 's/.*time=//' | sed -e 's/\.[[:digit:]]\+\ ms.*/ ms/')
+  # ping a host or the vpn gateway
+  if [ "$command" = "ping" ]; then
+    host=$parameter
+
+    if [ "$parameter" = "gw" ]; then
+      host=$(ip route show 0/1 | cut -d' ' -f3)
+    fi;
+    response=$(ping -c 1 -w 3 $host | grep time)
+    time=$(echo $response | sed -e 's/.*time=//' | sed -e 's/\.[[:digit:]]\+//')
 
     echo '{"result": {'
-    echo "\"host\": \"$gateway\","
+    echo "\"host\": \"$host\","
     echo "\"time\": \"$time\""
     echo "}}"
   fi;
 
   # check wan internet connection with HTTPS / wget
   if [ "$command" = "wan" ]; then
-    status="offline"
+    status="unreachable"
     spider=$(/usr/bin/wget --spider -q --no-check-certificate "https://$parameter" 2>&1)
 
     if [ $? -eq 0 ]; then
