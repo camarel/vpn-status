@@ -1,6 +1,4 @@
 #!/bin/sh
-echo "Content-type: text/html"
-echo ""
 
 command="${QUERY_STRING%%=*}"
 parameter="${QUERY_STRING#*=}"
@@ -13,12 +11,9 @@ if [ -z "$parameter" ] || [ "$parameter" = "$command" ]; then
   echo "unrecognized command"
   exit 0
 else
-  if [ "$command" = "ping" ]; then
-    response=$(ping -c 1 -w 3 $parameter | grep time | sed -e 's/\.[[:digit:]]\+\ ms.*/ ms/')
-    echo "$response"
-  fi;
-
   if [ "$command" = "trace" ]; then
+    echo "Content-type: text/html"
+    echo ""
     result=$(traceroute -m 5 -q 1 -w 1 "$parameter")
 
     if [ $? -eq 1 ]; then
@@ -30,17 +25,36 @@ else
     echo "<body>"
     echo "<pre style='color: white;' id='traceResponse'>$result</pre>"
     echo "</body></html>"
+    exit 0
+  fi;
+
+  echo "Content-type: application/json"
+  echo ""
+
+  # try to ping the vpn gateway
+  if [ "$command" = "vpn" ]; then
+    gateway=$(ip route | grep -e 0.0.0.0/1 | cut -d' ' -f3)
+    response=$(ping -c 1 -w 3 $gateway | grep time)
+    time=$(echo $response | sed -e 's/.*time=//' | sed -e 's/\.[[:digit:]]\+\ ms.*/ ms/')
+
+    echo '{"result": {'
+    echo "\"host\": \"$gateway\","
+    echo "\"time\": \"$time\""
+    echo "}}"
   fi;
 
   # check wan internet connection with HTTPS / wget
   if [ "$command" = "wan" ]; then
+    status="offline"
     spider=$(/usr/bin/wget --spider -q --no-check-certificate "https://$parameter" 2>&1)
 
     if [ $? -eq 0 ]; then
-      echo "status: online"
-    else
-      echo "status: offline"
+      status="online"
     fi
-    # echo "$spider"
+
+    echo '{"result": {'
+    echo "\"status\": \"$status\","
+    echo "\"host\": \"$parameter\""
+    echo "}}"
   fi;
 fi
