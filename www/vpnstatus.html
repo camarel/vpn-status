@@ -152,6 +152,10 @@ function statusRequest(command, ip, callback, label) {
             obj.ms = data.result.time;
             callback('ok', obj, data);
             return;
+          } else if (ip === 'gw' && data.result.host === '') {
+            obj.host = 'no vpn gateway defined';
+            callback(null, obj);
+            return;
           }
         }
 
@@ -168,10 +172,12 @@ function statusRequest(command, ip, callback, label) {
 
 function updateResult(status, data) {
   if (data.host) {
-    data.el.innerHTML += data.host + ': ';
+    data.el.innerHTML += data.host;
   }
 
-  data.el.innerHTML += status + ' ' + data.ms;
+  if (status) {
+    data.el.innerHTML += ': ' + status + ' ' + data.ms;
+  }
 
   if (status === 'ok' || status === 'online') {
     data.el.classList.add('ok');
