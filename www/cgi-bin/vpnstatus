@@ -31,6 +31,18 @@ else
   echo "Content-type: application/json"
   echo ""
 
+  # resolve a hostname
+  if [ "$command" = "resolve" ]; then
+    host=$parameter
+    nameserver=$(ip route show 0/1 | cut -d' ' -f3)
+
+    response=$(dig +short @$nameserver $host)
+
+    echo '{"result": {'
+    echo "\"resolved\": \"$response\""
+    echo "}}"
+  fi;
+
   # ping a host or the vpn gateway
   if [ "$command" = "ping" ]; then
     host=$parameter

@@ -64,7 +64,7 @@
     <span class="label">Traceroute</span>
   </p>
 
-  <iframe id="traceroute" src="" height="300">
+  <iframe id="traceroute" src="" height="140">
   </iframe>
 
 <script>
@@ -117,7 +117,7 @@ iframe.onload = function() {
   }
 };
 
-function statusRequest(command, ip, callback, label) {
+function statusRequest(command, ip, callback, label, dnstest) {
   const obj = {};
   const xhttp = new XMLHttpRequest();
   obj.el = document.createElement('p');
@@ -142,6 +142,23 @@ function statusRequest(command, ip, callback, label) {
             callback(data.result.status, obj, data);
             return;
           }
+        }
+
+        if (command === 'resolve') {
+          obj.host = ip;
+          obj.ms = data.result.resolved;
+          // special case when domain not found
+          if (data.result.resolved === '') {
+            obj.ms = 'nx';
+          }
+
+          if (data.result.resolved === dnstest) {
+            callback('ok', obj, data);
+          } else {
+            callback('failed: ', obj, data);
+          }
+
+          return;
         }
 
         // check connection to vpn gateway
@@ -197,6 +214,11 @@ statusRequest('ping', 'gw', updateResult, 'vpn gateway');
 // you can also ping any other host
 // statusRequest('ping', '192.168.2.15', updateResult, 'printer');
 
+// check DNS resolve - needs package bind-dig
+// check if a certain domain resolves according to your dns
+// statusRequest('resolve', 'something.com', updateResult, 'dns test', '12.34.56.78');
+// check if add blocking is working on the vpn gateway
+// statusRequest('resolve', 'googletagmanager.com' , updateResult, 'adblock', '');
 
 </script>
 
